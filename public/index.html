@@ -19,7 +19,7 @@ input,select{padding:8px;border-radius:8px;border:1px solid #4f3c16;background:#
 .actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}.tip{font-size:12px;color:#c8b486}
 </style></head><body>
 <div class="wrap">
-  <div class="top"><div><div class="brand">GOUJI · BLACK LABEL CLUB</div><div class="sub">顶级黑金会所版 · 6人实时对战 · 发牌/出牌/过牌</div></div>
+  <div class="top"><div><div class="brand">GOUJI · BLACK LABEL CLUB</div><div class="sub">顶级黑金会所版 · 6人实时对战 · 发牌/出牌/过牌 · 版本 v2.2</div></div>
   <div class="card">名字 <input id="name" value="Player"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select> <button class="btn" onclick="createRoom()">创建私密房</button></div></div>
 
   <div class="card">邀请码 <input id="room" placeholder="输入6位邀请码"> <button class="btn dark" onclick="joinRoom()">加入</button> <button class="btn dark" onclick="readyToggle()">准备</button> <button class="btn dark" onclick="addBots()">房主补机器人</button> <button class="btn" onclick="startGame()">开局发牌</button></div>
@@ -39,7 +39,28 @@ input,select{padding:8px;border-radius:8px;border:1px solid #4f3c16;background:#
 <script>
 const $=id=>document.getElementById(id); const s=io({transports:['websocket','polling'],reconnection:true});
 let myHand=[]; let selected=new Set(); let myId=''; let gameState={};
+let turnTimer=null; let leftSec=0;
 function log(t){ $('state').textContent=t+'\n'+$('state').textContent; }
+function startTurnCountdown(isMyTurn){
+  if (turnTimer) clearInterval(turnTimer);
+  leftSec = 20;
+  const render = ()=>{
+    const base = $('tip').textContent.split(' | 倒计时')[0];
+    $('tip').textContent = base + ` | 倒计时: ${leftSec}s`;
+  };
+  render();
+  turnTimer = setInterval(()=>{
+    leftSec -= 1;
+    render();
+    if (leftSec <= 0) {
+      clearInterval(turnTimer);
+      if (isMyTurn) {
+        // 超时自动过牌（若是新一轮无上家，服务器会返回提示）
+        s.emit('play:pass');
+      }
+    }
+  },1000);
+}
 function createRoom(){ s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
 function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{roomCode,name:$('name').value}); }
 function readyToggle(){ s.emit('player:ready'); }
@@ -73,9 +94,11 @@ s.on('room:update',d=>{
 
 s.on('game:state',g=>{
   gameState=g;
+  const myTurn = g.turnPlayerId===myId;
   const turnTxt = g.turnSeat ? `当前回合：${g.turnSeat}号位` : '等待开局';
   const lastTxt = g.lastPlay ? `\n上家：${g.lastPlay.playerName} -> ${g.lastPlay.cards.join(' ')}` : '\n上家：无（可自由出）';
-  $('tip').textContent = turnTxt + lastTxt + (g.turnPlayerId===myId?' | 轮到你':'');
+  $('tip').textContent = turnTxt + lastTxt + (myTurn?' | 轮到你':'');
+  if (g.turnSeat) startTurnCountdown(myTurn);
 });
 
 s.on('player:hand',d=>{ myHand=d.hand; selected.clear(); renderHand(); log('🎴 发牌完成'); });
