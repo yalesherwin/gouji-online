@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>够级联机大厅</title>
+<style>body{font-family:-apple-system,"PingFang SC";margin:0;background:#0b1020;color:#e8f0ff}.wrap{max-width:980px;margin:auto;padding:20px}.card{border:1px solid #2a3d68;border-radius:12px;padding:12px;margin:10px 0;background:#121a33}.btn{background:#6ee7ff;color:#031527;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}.muted{color:#9fb0d9} input,select{padding:8px;border-radius:8px;border:1px solid #2a3d68;background:#0d1530;color:#fff} .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px} pre{white-space:pre-wrap;background:#081128;padding:10px;border-radius:10px;max-height:220px;overflow:auto}</style>
+</head><body><div class="wrap">
+<h2>齐鲁够级 · 6人在线对战（邀请制）</h2>
+<div class="card">
+  名字 <input id="name" value="玩家" />
+  模式 <select id="mode"><option>不开点</option><option>打点</option></select>
+  <button class="btn" onclick="createRoom()">创建房间</button>
+</div>
+<div class="card">
+  房间码 <input id="room" placeholder="输入6位邀请码" />
+  <button class="btn" onclick="joinRoom()">加入房间</button>
+  <button class="btn" onclick="readyToggle()">准备/取消</button>
+  <button class="btn" onclick="startGame()">开始（6人全准备）</button>
+</div>
+<div class="grid">
+  <div class="card"><b>房间状态</b><pre id="state">未加入房间</pre></div>
+  <div class="card"><b>我的手牌</b><pre id="hand">未发牌</pre></div>
+</div>
+<div class="card"><b>规则说明</b><div class="muted">四副牌，6人各36张；必须2张3+2张4，否则需买2；含进贡规则接口。</div></div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s=io();
+const $=id=>document.getElementById(id);
+let currentRoom='';
+function createRoom(){s.emit('room:create',{name:$('name').value,mode:$('mode').value});}
+function joinRoom(){const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; currentRoom=roomCode; s.emit('room:join',{roomCode,name:$('name').value});}
+function readyToggle(){s.emit('player:ready');}
+function startGame(){s.emit('game:start');}
+
+s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间已创建：'+roomCode+'\n把邀请码发给队友'); });
+s.on('room:update',d=>{ $('state').textContent=JSON.stringify(d,null,2); });
+s.on('player:hand',d=>{ $('hand').textContent=`资格: ${d.qualified?'满足2张3+2张4':'不满足，需买2'}\n\n`+d.hand.join(' '); });
+s.on('err',msg=>alert(msg));
+</script>
+</body></html>
