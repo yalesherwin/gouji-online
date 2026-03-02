@@ -56,15 +56,20 @@ io.on('connection', (socket) => {
   socket.on('room:join', ({ roomCode, name }) => {
     const room = rooms.get(roomCode);
     if (!room) return socket.emit('err', '房间不存在');
-    if (room.players.length >= 6) return socket.emit('err', '房间已满');
     if (room.started) return socket.emit('err', '游戏已开始');
 
-    const player = { id: socket.id, name: name || `玩家${room.players.length+1}`, ready:false, hand:[], qualified:false, isBot:false };
-    room.players.push(player);
-    if (!room.ownerId) room.ownerId = socket.id;
+    // 防重复加入：同一个socket只保留一个席位
+    const exists = room.players.find(p => p.id === socket.id);
+    if (!exists) {
+      if (room.players.length >= 6) return socket.emit('err', '房间已满');
+      const player = { id: socket.id, name: name || `玩家${room.players.length+1}`, ready:false, hand:[], qualified:false, isBot:false };
+      room.players.push(player);
+      if (!room.ownerId) room.ownerId = socket.id;
+      room.logs.push(`${player.name} 加入房间`);
+    }
+
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
-    room.logs.push(`${player.name} 加入房间`);
     broadcastRoom(roomCode);
   });
 
@@ -108,6 +113,24 @@ io.on('connection', (socket) => {
     const roomCode = socket.data.roomCode;
     const room = rooms.get(roomCode);
     if (!room) return;
+
+    // 房主可一键补齐机器人到6人
+    if (room.ownerId === socket.id && room.players.length < 6) {
+      const need = 6 - room.players.length;
+      for (let i = 0; i < need; i++) {
+        const idx = room.players.filter(p => p.isBot).length + 1;
+        room.players.push({
+          id: `bot_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: `机器人${idx}`,
+          ready: true,
+          hand: [],
+          qualified: false,
+          isBot: true
+        });
+      }
+      room.logs.push(`开局自动补齐 ${need} 个机器人`);
+    }
+
     if (room.players.length !== 6) return socket.emit('err', '必须6人才能开始');
     if (!room.players.every(p => p.ready)) return socket.emit('err', '全员准备后才能开始');
 
