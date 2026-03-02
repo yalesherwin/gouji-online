@@ -23,13 +23,31 @@
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const s=io();
 const $=id=>document.getElementById(id);
+const s=io({ transports:['websocket','polling'], timeout:20000, reconnection:true, reconnectionAttempts:10 });
 let currentRoom='';
-function createRoom(){s.emit('room:create',{name:$('name').value,mode:$('mode').value});}
-function joinRoom(){const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; currentRoom=roomCode; s.emit('room:join',{roomCode,name:$('name').value});}
-function readyToggle(){s.emit('player:ready');}
-function startGame(){s.emit('game:start');}
+
+function setState(msg){ $('state').textContent = msg + '\n\n' + $('state').textContent; }
+
+function createRoom(){
+  if(!s.connected){
+    setState('连接未就绪，正在重连...');
+    s.connect();
+    return alert('连接未就绪，请1-2秒后再点创建房间');
+  }
+  s.emit('room:create',{name:$('name').value,mode:$('mode').value});
+}
+function joinRoom(){
+  const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return;
+  if(!s.connected){ s.connect(); return alert('连接未就绪，请稍后再试'); }
+  currentRoom=roomCode; s.emit('room:join',{roomCode,name:$('name').value});
+}
+function readyToggle(){ if(!s.connected) return alert('连接未就绪'); s.emit('player:ready'); }
+function startGame(){ if(!s.connected) return alert('连接未就绪'); s.emit('game:start'); }
+
+s.on('connect',()=> setState('✅ 已连接服务器：'+s.id));
+s.on('disconnect',(r)=> setState('⚠️ 连接断开：'+r));
+s.on('connect_error',(e)=> setState('❌ 连接错误：'+(e?.message||e)));
 
 s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间已创建：'+roomCode+'\n把邀请码发给队友'); });
 s.on('room:update',d=>{ $('state').textContent=JSON.stringify(d,null,2); });
