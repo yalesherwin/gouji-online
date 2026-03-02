@@ -114,8 +114,8 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
     if (!room) return;
 
-    // 房主可一键补齐机器人到6人
-    if (room.ownerId === socket.id && room.players.length < 6) {
+    // 任意玩家点开始时，自动补齐机器人到6人
+    if (room.players.length < 6) {
       const need = 6 - room.players.length;
       for (let i = 0; i < need; i++) {
         const idx = room.players.filter(p => p.isBot).length + 1;
@@ -131,7 +131,7 @@ io.on('connection', (socket) => {
       room.logs.push(`开局自动补齐 ${need} 个机器人`);
     }
 
-    if (room.players.length !== 6) return socket.emit('err', '必须6人才能开始');
+    if (room.players.length !== 6) return socket.emit('err', '补齐失败，请重试');
     if (!room.players.every(p => p.ready)) return socket.emit('err', '全员准备后才能开始');
 
     room.started = true;
