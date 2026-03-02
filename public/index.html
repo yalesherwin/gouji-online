@@ -1,57 +1,92 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>够级联机大厅</title>
-<style>body{font-family:-apple-system,"PingFang SC";margin:0;background:#0b1020;color:#e8f0ff}.wrap{max-width:980px;margin:auto;padding:20px}.card{border:1px solid #2a3d68;border-radius:12px;padding:12px;margin:10px 0;background:#121a33}.btn{background:#6ee7ff;color:#031527;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}.muted{color:#9fb0d9} input,select{padding:8px;border-radius:8px;border:1px solid #2a3d68;background:#0d1530;color:#fff} .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px} pre{white-space:pre-wrap;background:#081128;padding:10px;border-radius:10px;max-height:220px;overflow:auto}</style>
-</head><body><div class="wrap">
-<h2>齐鲁够级 · 6人在线对战（邀请制）</h2>
-<div class="card">
-  名字 <input id="name" value="玩家" />
-  模式 <select id="mode"><option>不开点</option><option>打点</option></select>
-  <button class="btn" onclick="createRoom()">创建房间</button>
-</div>
-<div class="card">
-  房间码 <input id="room" placeholder="输入6位邀请码" />
-  <button class="btn" onclick="joinRoom()">加入房间</button>
-  <button class="btn" onclick="readyToggle()">准备/取消</button>
-  <button class="btn" onclick="startGame()">开始（6人全准备）</button>
-</div>
-<div class="grid">
-  <div class="card"><b>房间状态</b><pre id="state">未加入房间</pre></div>
-  <div class="card"><b>我的手牌</b><pre id="hand">未发牌</pre></div>
-</div>
-<div class="card"><b>规则说明</b><div class="muted">四副牌，6人各36张；必须2张3+2张4，否则需买2；含进贡规则接口。</div></div>
+<title>够级联机对战</title>
+<style>
+body{font-family:-apple-system,"PingFang SC";margin:0;background:#0b1020;color:#e8f0ff}
+.wrap{max-width:1100px;margin:auto;padding:14px}
+.card{border:1px solid #2a3d68;border-radius:12px;padding:10px;margin:8px 0;background:#121a33}
+.btn{background:#6ee7ff;color:#031527;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+input,select{padding:8px;border-radius:8px;border:1px solid #2a3d68;background:#0d1530;color:#fff}
+.table{position:relative;height:62vh;min-height:560px;border:1px solid #2a3d68;border-radius:16px;background:radial-gradient(circle at 50% 45%,#16304d 0,#0c1831 50%,#0a1328 100%);overflow:hidden}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:220px;text-align:center;padding:10px;border:1px solid #2a3d68;border-radius:12px;background:#0a1328}
+.seat{position:absolute;width:150px;padding:8px;border:1px solid #2a3d68;border-radius:10px;background:#0e1933;font-size:12px}
+.s1{left:50%;top:10px;transform:translateX(-50%)} .s2{right:10px;top:100px} .s3{right:10px;bottom:100px}
+.s4{left:50%;bottom:10px;transform:translateX(-50%)} .s5{left:10px;bottom:100px} .s6{left:10px;top:100px}
+#myHand{margin-top:10px;max-height:120px;overflow:auto;background:#081128;border-radius:8px;padding:8px;font-size:12px}
+#state{white-space:pre-wrap;background:#081128;padding:8px;border-radius:8px;max-height:120px;overflow:auto;font-size:12px}
+.deck{position:absolute;left:50%;top:50%;width:24px;height:34px;background:#ffd166;border-radius:4px;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #111}
+.fly{position:absolute;width:16px;height:24px;background:#fff;border-radius:3px;left:50%;top:50%;transform:translate(-50%,-50%);opacity:.95;transition:all .35s ease}
+</style></head>
+<body><div class="wrap">
+  <div class="card">
+    名字 <input id="name" value="玩家"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select>
+    <button class="btn" onclick="createRoom()">创建房间</button>
+    房间码 <input id="room" placeholder="邀请码">
+    <button class="btn" onclick="joinRoom()">加入房间</button>
+    <button class="btn" onclick="readyToggle()">准备/取消</button>
+    <button class="btn" onclick="startGame()">开始</button>
+  </div>
+
+  <div class="table" id="table">
+    <div class="deck" id="deck"></div>
+    <div class="seat s1" id="seat1">1号位<br>未就绪</div>
+    <div class="seat s2" id="seat2">2号位<br>未就绪</div>
+    <div class="seat s3" id="seat3">3号位<br>未就绪</div>
+    <div class="seat s4" id="seat4">4号位（你）<br>未就绪</div>
+    <div class="seat s5" id="seat5">5号位<br>未就绪</div>
+    <div class="seat s6" id="seat6">6号位<br>未就绪</div>
+    <div class="center" id="center">等待开局</div>
+  </div>
+
+  <div class="card">
+    <b>我的手牌</b>
+    <div id="myHand">未发牌</div>
+  </div>
+  <div class="card"><b>状态</b><div id="state">初始化中...</div></div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const s=io({ transports:['websocket','polling'], timeout:20000, reconnection:true, reconnectionAttempts:10 });
-let currentRoom='';
+const s=io({transports:['websocket','polling'],timeout:20000,reconnection:true});
+function log(t){$('state').textContent=t+'\n'+$('state').textContent}
+function createRoom(){ if(!s.connected) return alert('连接中...'); s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
+function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{roomCode,name:$('name').value}); }
+function readyToggle(){ s.emit('player:ready'); }
+function startGame(){ s.emit('game:start'); }
 
-function setState(msg){ $('state').textContent = msg + '\n\n' + $('state').textContent; }
-
-function createRoom(){
-  if(!s.connected){
-    setState('连接未就绪，正在重连...');
-    s.connect();
-    return alert('连接未就绪，请1-2秒后再点创建房间');
-  }
-  s.emit('room:create',{name:$('name').value,mode:$('mode').value});
-}
-function joinRoom(){
-  const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return;
-  if(!s.connected){ s.connect(); return alert('连接未就绪，请稍后再试'); }
-  currentRoom=roomCode; s.emit('room:join',{roomCode,name:$('name').value});
-}
-function readyToggle(){ if(!s.connected) return alert('连接未就绪'); s.emit('player:ready'); }
-function startGame(){ if(!s.connected) return alert('连接未就绪'); s.emit('game:start'); }
-
-s.on('connect',()=> setState('✅ 已连接服务器：'+s.id));
-s.on('disconnect',(r)=> setState('⚠️ 连接断开：'+r));
-s.on('connect_error',(e)=> setState('❌ 连接错误：'+(e?.message||e)));
-
-s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间已创建：'+roomCode+'\n把邀请码发给队友'); });
-s.on('room:update',d=>{ $('state').textContent=JSON.stringify(d,null,2); });
-s.on('player:hand',d=>{ $('hand').textContent=`资格: ${d.qualified?'满足2张3+2张4':'不满足，需买2'}\n\n`+d.hand.join(' '); });
+s.on('connect',()=>log('✅ 已连接'));
+s.on('connect_error',e=>log('❌ 连接错误 '+(e.message||e)));
 s.on('err',msg=>alert(msg));
+s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间已创建：'+roomCode); });
+
+s.on('room:update',d=>{
+  $('center').textContent = d.started ? '发牌中 / 对战中' : `房间 ${d.roomCode}`;
+  for(let i=1;i<=6;i++){
+    const seat=d.seats[i-1];
+    $('seat'+i).innerHTML = seat ? `${i}号位 ${seat.name}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}` : `${i}号位<br>空位`;
+  }
+});
+
+function dealAnim(){
+  const table=$('table');
+  const targetIds=['seat1','seat2','seat3','seat4','seat5','seat6'];
+  let n=0;
+  const timer=setInterval(()=>{
+    const c=document.createElement('div'); c.className='fly'; table.appendChild(c);
+    const t=$(targetIds[n%6]).getBoundingClientRect();
+    const p=table.getBoundingClientRect();
+    const x=t.left-p.left+t.width/2, y=t.top-p.top+t.height/2;
+    requestAnimationFrame(()=>{c.style.left=x+'px'; c.style.top=y+'px'; c.style.opacity='.2';});
+    setTimeout(()=>c.remove(),420);
+    n++;
+    if(n>=72) clearInterval(timer); // 视觉发牌效果
+  },25);
+}
+
+s.on('player:hand',d=>{
+  dealAnim();
+  $('myHand').textContent = `资格: ${d.qualified?'满足2张3+2张4':'不满足，需买2'}\n\n`+d.hand.join(' ');
+  $('center').textContent = d.qualified ? '你已验牌通过' : '你需买2（规则触发）';
+});
 </script>
 </body></html>
