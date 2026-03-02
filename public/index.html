@@ -31,7 +31,7 @@ input,select{padding:8px;border-radius:8px;border:1px solid #4f3c16;background:#
     <div class="card">名字 <input id="name" value="Player"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select> <button class="btn" onclick="createRoom()">创建私密房</button></div>
   </div>
 
-  <div class="card">邀请码 <input id="room" placeholder="输入6位邀请码"> <button class="btn dark" onclick="joinRoom()">加入</button> <button class="btn dark" onclick="readyToggle()">准备</button> <button class="btn" onclick="startGame()">开局发牌</button></div>
+  <div class="card">邀请码 <input id="room" placeholder="输入6位邀请码"> <button class="btn dark" onclick="joinRoom()">加入</button> <button class="btn dark" onclick="readyToggle()">准备</button> <button class="btn dark" onclick="addBots()">房主补机器人</button> <button class="btn" onclick="startGame()">开局发牌</button></div>
 
   <div class="table" id="table">
     <div class="deck"></div>
@@ -52,13 +52,24 @@ function log(t){$('state').textContent=t+'\n'+$('state').textContent}
 function createRoom(){ if(!s.connected) return alert('连接中'); s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
 function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{roomCode,name:$('name').value}); }
 function readyToggle(){ s.emit('player:ready'); }
+function addBots(){
+  const n = Number(prompt('补几个机器人？(1-5)','1') || 1);
+  if (!n || n < 1) return;
+  s.emit('room:addBots', { count: n });
+}
 function startGame(){ s.emit('game:start'); }
 s.on('connect',()=>log('✅ 连接成功')); s.on('err',m=>alert(m));
 s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('私密邀请码：'+roomCode); });
 s.on('room:update',d=>{
-  $('center').innerHTML = `<b>房间 ${d.roomCode}</b><br>${d.started?'对战进行中':'等待6人准备'}`;
+  $('center').innerHTML = `<b>房间 ${d.roomCode}</b><br>${d.started?'对战进行中':'等待6人准备，可由房主补机器人'}`;
   for(let i=1;i<=6;i++){
-    const seat=d.seats[i-1]; $('seat'+i).innerHTML = seat?`${i}号位 ${seat.name}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}`:`${i}号位<br>空位`;
+    const seat=d.seats[i-1];
+    if (seat) {
+      const botTag = seat.isBot ? ' [BOT]' : '';
+      $('seat'+i).innerHTML = `${i}号位 ${seat.name}${botTag}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}`;
+    } else {
+      $('seat'+i).innerHTML = `${i}号位<br>空位`;
+    }
   }
 });
 function dealAnim(){
