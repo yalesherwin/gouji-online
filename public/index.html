@@ -1,92 +1,74 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>够级联机对战</title>
+<title>GOUJI · BLACK LABEL CLUB</title>
 <style>
-body{font-family:-apple-system,"PingFang SC";margin:0;background:#0b1020;color:#e8f0ff}
-.wrap{max-width:1100px;margin:auto;padding:14px}
-.card{border:1px solid #2a3d68;border-radius:12px;padding:10px;margin:8px 0;background:#121a33}
-.btn{background:#6ee7ff;color:#031527;border:0;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
-input,select{padding:8px;border-radius:8px;border:1px solid #2a3d68;background:#0d1530;color:#fff}
-.table{position:relative;height:62vh;min-height:560px;border:1px solid #2a3d68;border-radius:16px;background:radial-gradient(circle at 50% 45%,#16304d 0,#0c1831 50%,#0a1328 100%);overflow:hidden}
-.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:220px;text-align:center;padding:10px;border:1px solid #2a3d68;border-radius:12px;background:#0a1328}
-.seat{position:absolute;width:150px;padding:8px;border:1px solid #2a3d68;border-radius:10px;background:#0e1933;font-size:12px}
-.s1{left:50%;top:10px;transform:translateX(-50%)} .s2{right:10px;top:100px} .s3{right:10px;bottom:100px}
-.s4{left:50%;bottom:10px;transform:translateX(-50%)} .s5{left:10px;bottom:100px} .s6{left:10px;top:100px}
-#myHand{margin-top:10px;max-height:120px;overflow:auto;background:#081128;border-radius:8px;padding:8px;font-size:12px}
-#state{white-space:pre-wrap;background:#081128;padding:8px;border-radius:8px;max-height:120px;overflow:auto;font-size:12px}
-.deck{position:absolute;left:50%;top:50%;width:24px;height:34px;background:#ffd166;border-radius:4px;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #111}
-.fly{position:absolute;width:16px;height:24px;background:#fff;border-radius:3px;left:50%;top:50%;transform:translate(-50%,-50%);opacity:.95;transition:all .35s ease}
+:root{--bg:#070707;--gold:#d4af37;--gold2:#f5d27a;--panel:#101010;--line:#3a2d12;--text:#f5f1e6;--muted:#b8aa87}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+background:radial-gradient(1200px 500px at 50% -10%,#2a1e0a 0,transparent 60%),linear-gradient(180deg,#050505,#0b0b0b)}
+.wrap{max-width:1200px;margin:auto;padding:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-size:30px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--gold2),var(--gold));-webkit-background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:13px}
+.card{background:linear-gradient(160deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:14px;padding:10px;margin:10px 0}
+.btn{border:1px solid #6b5321;background:linear-gradient(135deg,#f0cd7b,#c89c2a);color:#181102;padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}
+.btn.dark{background:#17130a;color:#e9d39c}
+input,select{padding:8px;border-radius:8px;border:1px solid #4f3c16;background:#0f0d08;color:#f9edcf}
+.table{position:relative;height:66vh;min-height:620px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#1c1710 0,#100e0b 45%,#090909 100%);box-shadow:0 20px 70px rgba(0,0,0,.5), inset 0 0 80px rgba(212,175,55,.08)}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:280px;text-align:center;padding:12px;border:1px solid #5f4a1b;border-radius:14px;background:#0c0a07}
+.center b{color:var(--gold2)}
+.seat{position:absolute;width:170px;padding:10px;border:1px solid #5d481a;border-radius:12px;background:#0f0d09;font-size:12px;color:#f2e4bf}
+.s1{left:50%;top:12px;transform:translateX(-50%)} .s2{right:14px;top:120px} .s3{right:14px;bottom:120px}
+.s4{left:50%;bottom:12px;transform:translateX(-50%)} .s5{left:14px;bottom:120px} .s6{left:14px;top:120px}
+.deck{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:40px;border-radius:5px;background:linear-gradient(180deg,#ffe4a8,#c89c2a)}
+.fly{position:absolute;width:16px;height:24px;background:#fff7e1;border-radius:3px;left:50%;top:50%;transform:translate(-50%,-50%);transition:all .3s ease;opacity:.95}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.log{white-space:pre-wrap;background:#0a0907;padding:10px;border-radius:10px;max-height:150px;overflow:auto;font-size:12px;color:#dbc999}
+.hand{max-height:140px;overflow:auto;background:#0a0907;padding:10px;border-radius:10px;font-size:12px;color:#f5e6bf}
+.vip{display:inline-block;padding:2px 8px;border:1px solid #7d6225;border-radius:999px;font-size:11px;color:#ffe3a0}
 </style></head>
 <body><div class="wrap">
-  <div class="card">
-    名字 <input id="name" value="玩家"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select>
-    <button class="btn" onclick="createRoom()">创建房间</button>
-    房间码 <input id="room" placeholder="邀请码">
-    <button class="btn" onclick="joinRoom()">加入房间</button>
-    <button class="btn" onclick="readyToggle()">准备/取消</button>
-    <button class="btn" onclick="startGame()">开始</button>
+  <div class="top">
+    <div><div class="brand">GOUJI · BLACK LABEL CLUB</div><div class="sub">顶级黑金会所版 · 6人实时对战 · 私密邀请码房间 <span class="vip">VIP PRIVATE TABLE</span></div></div>
+    <div class="card">名字 <input id="name" value="Player"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select> <button class="btn" onclick="createRoom()">创建私密房</button></div>
   </div>
+
+  <div class="card">邀请码 <input id="room" placeholder="输入6位邀请码"> <button class="btn dark" onclick="joinRoom()">加入</button> <button class="btn dark" onclick="readyToggle()">准备</button> <button class="btn" onclick="startGame()">开局发牌</button></div>
 
   <div class="table" id="table">
-    <div class="deck" id="deck"></div>
-    <div class="seat s1" id="seat1">1号位<br>未就绪</div>
-    <div class="seat s2" id="seat2">2号位<br>未就绪</div>
-    <div class="seat s3" id="seat3">3号位<br>未就绪</div>
-    <div class="seat s4" id="seat4">4号位（你）<br>未就绪</div>
-    <div class="seat s5" id="seat5">5号位<br>未就绪</div>
-    <div class="seat s6" id="seat6">6号位<br>未就绪</div>
-    <div class="center" id="center">等待开局</div>
+    <div class="deck"></div>
+    <div class="seat s1" id="seat1">1号位<br>空位</div><div class="seat s2" id="seat2">2号位<br>空位</div><div class="seat s3" id="seat3">3号位<br>空位</div>
+    <div class="seat s4" id="seat4">4号位（你）<br>空位</div><div class="seat s5" id="seat5">5号位<br>空位</div><div class="seat s6" id="seat6">6号位<br>空位</div>
+    <div class="center" id="center"><b>BLACK LABEL TABLE</b><br>等待入座</div>
   </div>
 
-  <div class="card">
-    <b>我的手牌</b>
-    <div id="myHand">未发牌</div>
+  <div class="grid">
+    <div class="card"><b>桌面日志</b><div id="state" class="log">系统启动...</div></div>
+    <div class="card"><b>你的手牌</b><div id="myHand" class="hand">未发牌</div></div>
   </div>
-  <div class="card"><b>状态</b><div id="state">初始化中...</div></div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const $=id=>document.getElementById(id);
-const s=io({transports:['websocket','polling'],timeout:20000,reconnection:true});
+const $=id=>document.getElementById(id); const s=io({transports:['websocket','polling'],reconnection:true});
 function log(t){$('state').textContent=t+'\n'+$('state').textContent}
-function createRoom(){ if(!s.connected) return alert('连接中...'); s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
+function createRoom(){ if(!s.connected) return alert('连接中'); s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
 function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{roomCode,name:$('name').value}); }
 function readyToggle(){ s.emit('player:ready'); }
 function startGame(){ s.emit('game:start'); }
-
-s.on('connect',()=>log('✅ 已连接'));
-s.on('connect_error',e=>log('❌ 连接错误 '+(e.message||e)));
-s.on('err',msg=>alert(msg));
-s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间已创建：'+roomCode); });
-
+s.on('connect',()=>log('✅ 连接成功')); s.on('err',m=>alert(m));
+s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('私密邀请码：'+roomCode); });
 s.on('room:update',d=>{
-  $('center').textContent = d.started ? '发牌中 / 对战中' : `房间 ${d.roomCode}`;
+  $('center').innerHTML = `<b>房间 ${d.roomCode}</b><br>${d.started?'对战进行中':'等待6人准备'}`;
   for(let i=1;i<=6;i++){
-    const seat=d.seats[i-1];
-    $('seat'+i).innerHTML = seat ? `${i}号位 ${seat.name}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}` : `${i}号位<br>空位`;
+    const seat=d.seats[i-1]; $('seat'+i).innerHTML = seat?`${i}号位 ${seat.name}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}`:`${i}号位<br>空位`;
   }
 });
-
 function dealAnim(){
-  const table=$('table');
-  const targetIds=['seat1','seat2','seat3','seat4','seat5','seat6'];
-  let n=0;
-  const timer=setInterval(()=>{
-    const c=document.createElement('div'); c.className='fly'; table.appendChild(c);
-    const t=$(targetIds[n%6]).getBoundingClientRect();
-    const p=table.getBoundingClientRect();
-    const x=t.left-p.left+t.width/2, y=t.top-p.top+t.height/2;
-    requestAnimationFrame(()=>{c.style.left=x+'px'; c.style.top=y+'px'; c.style.opacity='.2';});
-    setTimeout(()=>c.remove(),420);
-    n++;
-    if(n>=72) clearInterval(timer); // 视觉发牌效果
-  },25);
+  const table=$('table'), ids=['seat1','seat2','seat3','seat4','seat5','seat6']; let n=0;
+  const tm=setInterval(()=>{const c=document.createElement('div'); c.className='fly'; table.appendChild(c);
+    const t=$(ids[n%6]).getBoundingClientRect(), p=table.getBoundingClientRect();
+    const x=t.left-p.left+t.width/2, y=t.top-p.top+t.height/2; requestAnimationFrame(()=>{c.style.left=x+'px'; c.style.top=y+'px'; c.style.opacity='.2';});
+    setTimeout(()=>c.remove(),350); n++; if(n>=90) clearInterval(tm);
+  },22);
 }
-
-s.on('player:hand',d=>{
-  dealAnim();
-  $('myHand').textContent = `资格: ${d.qualified?'满足2张3+2张4':'不满足，需买2'}\n\n`+d.hand.join(' ');
-  $('center').textContent = d.qualified ? '你已验牌通过' : '你需买2（规则触发）';
-});
+s.on('player:hand',d=>{ dealAnim(); $('myHand').textContent=`资格：${d.qualified?'满足2张3+2张4':'不满足，需买2'}\n\n`+d.hand.join(' '); log('🎴 发牌完成'); });
 </script>
 </body></html>
