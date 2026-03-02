@@ -1,106 +1,153 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GOUJI · BLACK LABEL CLUB</title>
-<style>
-:root{--bg:#070707;--gold:#d4af37;--gold2:#f5d27a;--line:#3a2d12;--text:#f5f1e6;--muted:#b8aa87}
-*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:radial-gradient(1200px 500px at 50% -10%,#2a1e0a 0,transparent 60%),linear-gradient(180deg,#050505,#0b0b0b)}
-.wrap{max-width:1200px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.brand{font-size:30px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--gold2),var(--gold));-webkit-background-clip:text;color:transparent}.sub{color:var(--muted);font-size:13px}
-.card{background:linear-gradient(160deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:14px;padding:10px;margin:10px 0}
-.btn{border:1px solid #6b5321;background:linear-gradient(135deg,#f0cd7b,#c89c2a);color:#181102;padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}.btn.dark{background:#17130a;color:#e9d39c}
-input,select{padding:8px;border-radius:8px;border:1px solid #4f3c16;background:#0f0d08;color:#f9edcf}
-.table{position:relative;height:62vh;min-height:560px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#1c1710 0,#100e0b 45%,#090909 100%)}
-.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:320px;text-align:center;padding:12px;border:1px solid #5f4a1b;border-radius:14px;background:#0c0a07}.center b{color:var(--gold2)}
-.seat{position:absolute;width:170px;padding:10px;border:1px solid #5d481a;border-radius:12px;background:#0f0d09;font-size:12px;color:#f2e4bf}
-.s1{left:50%;top:12px;transform:translateX(-50%)} .s2{right:14px;top:120px} .s3{right:14px;bottom:120px}.s4{left:50%;bottom:12px;transform:translateX(-50%)} .s5{left:14px;bottom:120px} .s6{left:14px;top:120px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.log{white-space:pre-wrap;background:#0a0907;padding:10px;border-radius:10px;max-height:160px;overflow:auto;font-size:12px;color:#dbc999}
-.hand{display:flex;flex-wrap:wrap;gap:6px;min-height:72px;background:#0a0907;padding:10px;border-radius:10px}
-.poker{width:42px;height:58px;border-radius:6px;border:1px solid #d9c58c;background:linear-gradient(#fff,#f4f0e4);color:#222;display:flex;align-items:center;justify-content:center;font-weight:800;cursor:pointer;user-select:none}
-.poker.sel{transform:translateY(-6px);outline:2px solid #d4af37}
-.actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}.tip{font-size:12px;color:#c8b486}
-</style></head><body>
-<div class="wrap">
-  <div class="top"><div><div class="brand">GOUJI · BLACK LABEL CLUB</div><div class="sub">顶级黑金会所版 · 6人实时对战 · 发牌/出牌/过牌 · 版本 v2.2</div></div>
-  <div class="card">名字 <input id="name" value="Player"> 模式 <select id="mode"><option>不开点</option><option>打点</option></select> <button class="btn" onclick="createRoom()">创建私密房</button></div></div>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>够级竞技大厅 V3</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#0b1f25;color:#fff}
+    .topbar{height:56px;background:#102a33;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid #1d4653}
+    .topbar .title{font-weight:800}
+    .btn{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+    .btn.blue{background:#2ea9ff;color:#fff}.btn.orange{background:#ffb33b;color:#4a2800}.btn.green{background:#7bdc39;color:#173400}.btn.gray{background:#607d8b;color:#fff}
 
-  <div class="card">邀请码 <input id="room" placeholder="输入6位邀请码"> <button class="btn dark" onclick="joinRoom()">加入</button> <button class="btn dark" onclick="readyToggle()">准备</button> <button class="btn dark" onclick="addBots()">房主补机器人</button> <button class="btn" onclick="startGame()">开局发牌</button></div>
+    .table-wrap{position:relative;min-height:62vh;background:radial-gradient(circle at 50% 45%, #1da18f 0%, #0f6f66 55%, #0a4950 100%);overflow:hidden}
+    .table-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;background:rgba(0,0,0,.22);padding:14px 18px;border-radius:14px;min-width:280px}
+    .phase{font-size:20px;font-weight:800;color:#ffe082}
+    .clock{margin-top:8px;font-size:26px;font-weight:900}
+    .declare{display:flex;gap:12px;justify-content:center;margin-top:12px}
 
-  <div class="table" id="table">
-    <div class="seat s1" id="seat1">1号位<br>空位</div><div class="seat s2" id="seat2">2号位<br>空位</div><div class="seat s3" id="seat3">3号位<br>空位</div>
-    <div class="seat s4" id="seat4">4号位（你）<br>空位</div><div class="seat s5" id="seat5">5号位<br>空位</div><div class="seat s6" id="seat6">6号位<br>空位</div>
-    <div class="center" id="center"><b>BLACK LABEL TABLE</b><br>等待入座</div>
+    .seat{position:absolute;width:120px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:6px;text-align:center;font-size:12px}
+    .avatar{width:40px;height:40px;border-radius:50%;margin:0 auto 4px;background:linear-gradient(135deg,#7bdcff,#4ea1ff)}
+    .s1{left:50%;top:10px;transform:translateX(-50%)} .s2{right:8px;top:100px} .s3{right:8px;bottom:140px}
+    .s4{left:50%;bottom:120px;transform:translateX(-50%)} .s5{left:8px;bottom:140px} .s6{left:8px;top:100px}
+
+    .board{background:#0f2932;padding:10px;border-top:1px solid #1a3f4c}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    input,select{background:#163946;color:#fff;border:1px solid #296074;border-radius:8px;padding:7px}
+
+    .play-area{background:#112f3a;border-radius:10px;padding:8px;margin:6px 0}
+    .last{font-size:14px;color:#ffecb3;margin-bottom:4px}
+
+    .hand{display:flex;gap:4px;overflow-x:auto;padding:8px;background:#0c222b;border-radius:10px}
+    .card{min-width:34px;height:52px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#111;display:flex;align-items:center;justify-content:center;font-weight:800;cursor:pointer}
+    .card.sel{transform:translateY(-8px);outline:2px solid #ffd54f}
+
+    .logs{margin-top:8px;max-height:120px;overflow:auto;background:#0c222b;border-radius:8px;padding:8px;font-size:12px;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">够级竞技大厅 · V3（重构中）</div>
+    <div>
+      <button class="btn blue" onclick="createRoom()">创建房间</button>
+      <button class="btn gray" onclick="joinRoom()">加入房间</button>
+    </div>
   </div>
 
-  <div class="grid">
-    <div class="card"><b>桌面日志</b><div id="state" class="log">系统启动...</div></div>
-    <div class="card"><b>你的手牌</b><div id="myHand" class="hand"></div><div class="actions"><button class="btn" onclick="playSelected()">出牌</button><button class="btn dark" onclick="passTurn()">过牌</button></div><div class="tip" id="tip">提示：选择同点数牌可出（单/对/三/四）</div></div>
+  <div class="board">
+    <div class="controls">
+      名字 <input id="name" value="玩家宋学文" />
+      房间码 <input id="room" placeholder="6位邀请码" />
+      模式 <select id="mode"><option>不开点</option><option>打点</option></select>
+      <button class="btn gray" onclick="readyToggle()">准备</button>
+      <button class="btn gray" onclick="addBots()">补机器人</button>
+      <button class="btn orange" onclick="startGame()">开始</button>
+      <button class="btn orange" onclick="playSelected()">出牌</button>
+      <button class="btn green" onclick="passTurn()">过牌</button>
+    </div>
   </div>
-</div>
+
+  <div class="table-wrap">
+    <div class="seat s1" id="seat1"><div class="avatar"></div>1号位<br/>空位</div>
+    <div class="seat s2" id="seat2"><div class="avatar"></div>2号位<br/>空位</div>
+    <div class="seat s3" id="seat3"><div class="avatar"></div>3号位<br/>空位</div>
+    <div class="seat s4" id="seat4"><div class="avatar"></div>4号位<br/>空位</div>
+    <div class="seat s5" id="seat5"><div class="avatar"></div>5号位<br/>空位</div>
+    <div class="seat s6" id="seat6"><div class="avatar"></div>6号位<br/>空位</div>
+
+    <div class="table-center">
+      <div class="phase" id="phase">等待开局</div>
+      <div class="clock" id="clock">--</div>
+      <div class="declare" id="declareBox" style="display:none">
+        <button class="btn orange" onclick="declarePoint(true)">宣点</button>
+        <button class="btn green" onclick="declarePoint(false)">不宣</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="play-area">
+      <div class="last" id="lastPlay">上家：无</div>
+      <div class="hand" id="myHand"></div>
+    </div>
+    <div class="logs" id="logs">系统启动...</div>
+  </div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const $=id=>document.getElementById(id); const s=io({transports:['websocket','polling'],reconnection:true});
-let myHand=[]; let selected=new Set(); let myId=''; let gameState={};
-let turnTimer=null; let leftSec=0;
-function log(t){ $('state').textContent=t+'\n'+$('state').textContent; }
-function startTurnCountdown(isMyTurn){
-  if (turnTimer) clearInterval(turnTimer);
-  leftSec = 20;
-  const render = ()=>{
-    const base = $('tip').textContent.split(' | 倒计时')[0];
-    $('tip').textContent = base + ` | 倒计时: ${leftSec}s`;
-  };
-  render();
-  turnTimer = setInterval(()=>{
-    leftSec -= 1;
-    render();
-    if (leftSec <= 0) {
-      clearInterval(turnTimer);
-      if (isMyTurn) {
-        // 超时自动过牌（若是新一轮无上家，服务器会返回提示）
-        s.emit('play:pass');
-      }
-    }
-  },1000);
-}
-function createRoom(){ s.emit('room:create',{name:$('name').value,mode:$('mode').value}); }
-function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{roomCode,name:$('name').value}); }
+const s = io({ transports:['websocket','polling'], reconnection:true });
+const $ = id => document.getElementById(id);
+let myId = '';
+let myHand = [];
+let selected = new Set();
+let timer = null, left = 0;
+
+function log(t){ $('logs').textContent = t + '\n' + $('logs').textContent; }
+function setPhase(text){ $('phase').textContent = text; }
+function setClock(t){ $('clock').textContent = t; }
+function startTurnClock(sec=20){ clearInterval(timer); left=sec; setClock(left+'s'); timer=setInterval(()=>{ left--; setClock(left+'s'); if(left<=0){clearInterval(timer);} },1000); }
+
+function createRoom(){ s.emit('room:create',{ name:$('name').value, mode:$('mode').value }); }
+function joinRoom(){ const roomCode=$('room').value.trim().toUpperCase(); if(!roomCode) return; s.emit('room:join',{ roomCode, name:$('name').value }); }
 function readyToggle(){ s.emit('player:ready'); }
-function addBots(){ const n=Number(prompt('补几个机器人?','5')||5); s.emit('room:addBots',{count:n}); }
+function addBots(){ const n = Number(prompt('补几个机器人?','5')||5); s.emit('room:addBots',{count:n}); }
 function startGame(){ s.emit('game:start'); }
 function playSelected(){ const cards=[...selected]; if(!cards.length) return alert('先选牌'); s.emit('play:cards',{cards}); }
 function passTurn(){ s.emit('play:pass'); }
 
+function declarePoint(v){
+  $('declareBox').style.display='none';
+  log(v ? '你选择了 宣点' : '你选择了 不宣');
+  setPhase('出牌阶段');
+}
+
 function renderHand(){
-  const box=$('myHand'); box.innerHTML='';
+  const box = $('myHand'); box.innerHTML='';
   myHand.forEach(c=>{
-    const d=document.createElement('div'); d.className='poker'+(selected.has(c)?' sel':''); d.textContent=c;
+    const d=document.createElement('div'); d.className='card'+(selected.has(c)?' sel':''); d.textContent=c;
     d.onclick=()=>{ if(selected.has(c)) selected.delete(c); else selected.add(c); renderHand(); };
     box.appendChild(d);
   });
 }
 
-s.on('connect',()=>{ myId=s.id; log('✅ 连接成功 '+s.id); });
-s.on('err',m=>alert(m));
-s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('私密邀请码：'+roomCode); });
+s.on('connect',()=>{ myId=s.id; log('✅ 已连接: '+s.id); });
+s.on('err',msg=> alert(msg));
+s.on('room:created',({roomCode})=>{ $('room').value=roomCode; alert('房间码: '+roomCode); });
 
 s.on('room:update',d=>{
-  $('center').innerHTML = `<b>房间 ${d.roomCode}</b><br>${d.started?'对战进行中':'等待准备'}`;
   for(let i=1;i<=6;i++){
     const seat=d.seats[i-1];
-    if(seat){ $('seat'+i).innerHTML=`${i}号位 ${seat.name}${seat.isBot?' [BOT]':''}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}`; }
-    else $('seat'+i).innerHTML=`${i}号位<br>空位`;
+    $('seat'+i).innerHTML = seat ? `<div class='avatar'></div>${i}号位 ${seat.name}${seat.isBot?'[BOT]':''}<br>${seat.ready?'已准备':'未准备'} | 手牌:${seat.cards}` : `<div class='avatar'></div>${i}号位<br>空位`;
   }
   if(d.logs?.length) log('📝 '+d.logs[d.logs.length-1]);
 });
 
 s.on('game:state',g=>{
-  gameState=g;
+  if(!g.started){ setPhase('等待开局'); setClock('--'); return; }
+  setPhase('出牌阶段');
   const myTurn = g.turnPlayerId===myId;
-  const turnTxt = g.turnSeat ? `当前回合：${g.turnSeat}号位` : '等待开局';
-  const lastTxt = g.lastPlay ? `\n上家：${g.lastPlay.playerName} -> ${g.lastPlay.cards.join(' ')}` : '\n上家：无（可自由出）';
-  $('tip').textContent = turnTxt + lastTxt + (myTurn?' | 轮到你':'');
-  if (g.turnSeat) startTurnCountdown(myTurn);
+  if(myTurn) startTurnClock(20);
+  $('lastPlay').textContent = g.lastPlay ? `上家：${g.lastPlay.playerName} -> ${g.lastPlay.cards.join(' ')}` : '上家：无（自由出牌）';
 });
 
-s.on('player:hand',d=>{ myHand=d.hand; selected.clear(); renderHand(); log('🎴 发牌完成'); });
+s.on('player:hand',d=>{
+  myHand = d.hand; selected.clear(); renderHand();
+  $('declareBox').style.display='flex';
+  setPhase('宣布对家是否开点');
+  startTurnClock(10);
+  log(d.qualified ? '✅ 验牌通过（2张3+2张4）' : '⚠️ 验牌不满足，需买2');
+});
 </script>
-</body></html>
+</body>
+</html>
